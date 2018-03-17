@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Python Slack Bot class for use with the pythOnBoarding app
 """
@@ -16,17 +15,13 @@ authed_teams = {}
 
 class Bot(object):
     """ Instanciates a Bot object to handle Slack onboarding interactions."""
+
     def __init__(self):
         super(Bot, self).__init__()
-        self.name = "pythonboardingbot"
+        self.name = "ronnie-bot"
         self.emoji = ":robot_face:"
-        # When we instantiate a new bot object, we can access the app
-        # credentials we set earlier in our local development environment.
         self.oauth = {"client_id": os.environ.get("CLIENT_ID"),
                       "client_secret": os.environ.get("CLIENT_SECRET"),
-                      # Scopes provide and limit permissions to what our app
-                      # can access. It's important to use the most restricted
-                      # scope that your app will need.
                       "scope": "bot"}
         self.verification = os.environ.get("VERIFICATION_TOKEN")
 
@@ -57,11 +52,11 @@ class Bot(object):
         # Slack returns a temporary authorization code that we'll exchange for
         # an OAuth token using the oauth.access endpoint
         auth_response = self.client.api_call(
-                                "oauth.access",
-                                client_id=self.oauth["client_id"],
-                                client_secret=self.oauth["client_secret"],
-                                code=code
-                                )
+            "oauth.access",
+            client_id=self.oauth["client_id"],
+            client_secret=self.oauth["client_secret"],
+            code=code
+        )
         # To keep track of authorized teams and their associated OAuth tokens,
         # we will save the team ID and bot tokens to the global
         # authed_teams object
