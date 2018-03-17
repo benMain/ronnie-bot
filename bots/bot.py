@@ -1,5 +1,5 @@
 """
-Python Slack Bot class for use with the pythOnBoarding app
+Python Slack Bot class for use with the ronnie-bot app!
 """
 import os
 import message

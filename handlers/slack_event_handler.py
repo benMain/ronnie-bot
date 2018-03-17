@@ -4,7 +4,7 @@ Maps slack_events from the Events API to bot functions.
 Author: Benjamin Main
 Date : 03/16/2018
 """
-import bots.bot.bot as bot
+from bots import bot
 from flask import make_response
 
 pyBot = bot.Bot()

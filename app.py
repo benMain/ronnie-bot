@@ -4,8 +4,8 @@ Flask Entrypoint for
 """
 import json
 from flask import Flask, request, make_response, render_template
-from slack_event_handler import (_event_handler, _oauth_parameters,
-                                 _bot_auth, _bot_verification)
+from handlers.slack_event_handler import (_event_handler, _oauth_parameters,
+                                          _bot_auth, _bot_verification)
 
 
 app = Flask(__name__)
