@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
+
 """
-A routing layer for the onboarding bot tutorial built using
-[Slack's Events API](https://api.slack.com/events-api) in Python
+Flask Entrypoint for
 """
 import json
-import bot
+import bots.bot.bot as bot
 from flask import Flask, request, make_response, render_template
 
 pyBot = bot.Bot()
@@ -77,20 +76,18 @@ def _event_handler(event_type, slack_event):
 
 @app.route("/install", methods=["GET"])
 def pre_install():
-    """This route renders the installation page with 'Add to Slack' button."""
+    """This route renders the installation page and sets up OAuth for ronnie-bot!"""
     # Since we've set the client ID and scope on our Bot object, we can change
     # them more easily while we're developing our app.
     client_id = pyBot.oauth["client_id"]
     scope = pyBot.oauth["scope"]
-    # Our template is using the Jinja templating language to dynamically pass
-    # our client id and scope
     return render_template("install.html", client_id=client_id, scope=scope)
 
 
 @app.route("/thanks", methods=["GET", "POST"])
 def thanks():
     """
-    This route is called by Slack after the user installs our app. It will
+    This route is called by Slack after the user installs ronnie-bot. It will
     exchange the temporary authorization code Slack sends for an OAuth token
     which we'll save on the bot object to use later.
     To let the user know what's happened it will also render a thank you page.
