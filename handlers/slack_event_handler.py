@@ -1,0 +1,66 @@
+"""
+Maps slack_events from the Events API to bot functions.
+
+Author: Benjamin Main
+Date : 03/16/2018
+"""
+from bots import chat_bot
+from flask import make_response
+
+chat_bot = chat_bot.ChatBot()
+
+
+def _bot_verification():
+    """Check Bot Verification Token."""
+    return chat_bot.verification
+
+
+def _bot_auth(auth_code):
+    """Authenticate with OAuth."""
+    chat_bot.auth(auth_code)
+
+
+def _oauth_parameters():
+    """Fetches oauth client_id and scope."""
+    return chat_bot.oauth["client_id"], chat_bot.oauth["scope"]
+
+
+def _event_handler(event_type, slack_event):
+    """
+    Ronnie Bot is made up of multiple sub-bots and routing events to
+    the appropriate bot takes planning
+    """
+    team_id = slack_event["team_id"]
+
+    # ============== Respond to Messages ============= #
+    # Read Messages and Respond if necessary.
+
+    if event_type == "message":
+        if not is_from_bot(slack_event):
+            chat_bot.insult_teammates(slack_event["event"], team_id)
+        return make_response("ChatBot mocks his team mates occasionally...",
+                             200,)
+
+    # ============= Reaction Added Events ============= #
+    # If people like things ChatBot does not like them.
+    elif event_type == "reaction_added":
+        return make_response("Chatbot votes against people", 200,)
+
+    # =============== Pin Added Events ================ #
+    # If the user has added an emoji reaction to the onboarding message
+    elif event_type == "pin_added":
+        return make_response("Welcome message updates with pin", 200,)
+
+    # ============= Event Type Not Found! ============= #
+    # If the event_type does not have a handler
+    message = "You have not added an event handler for the %s" % event_type
+    # Return a helpful error message
+    return make_response(message, 200, {"X-Slack-No-Retry": 1})
+
+
+def is_from_bot(slack_event):
+    if("username" in slack_event["event"].keys()
+            and "ronnie-bot" in slack_event["event"]["username"]):
+        return True
+    else:
+        return False

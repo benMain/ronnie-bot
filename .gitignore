@@ -1,4 +1,6 @@
 build/*
-env/*
+venv/*
 env_vars.py
 *.pyc
+.vscode/*
+*.sqlite3
