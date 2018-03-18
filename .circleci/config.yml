@@ -1,0 +1,68 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
+      - image: circleci/python:2.7
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: Install Dependencies
+          command: |
+            virtualenv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+        
+      - run:
+          name: Unit Test
+          command: |
+            . venv/bin/activate
+            nosetests . --with-coverage --cover-xml --cover-erase --cover-package=bots,handlers,templates --cover-xml-file=coverage.xml
+            .circleci/coverage-update.sh
+
+      - store_artifacts:
+          path: coverage.xml
+          destination: test-reports
+
+      - deploy:
+          name: Zappa Dev
+          command: |
+              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                mkdir ~/.aws
+                mv .circleci/aws_config ~/.aws/config
+                echo "[default]" > ~/.aws/credentials
+                echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+                echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+                . venv/bin/activate
+                zappa update dev
+              else
+                echo "Not Master, will not Deploy..."
+              fi 
+
+          

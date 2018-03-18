@@ -1,4 +1,7 @@
 # Ronnie Bot
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6ca4c3f69eb744bbbf83af0b3a0dae00)](https://www.codacy.com/app/bmain/ronnie-bot?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=benMain/ronnie-bot&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/6ca4c3f69eb744bbbf83af0b3a0dae00)](https://www.codacy.com/app/bmain/ronnie-bot?utm_source=github.com&utm_medium=referral&utm_content=benMain/ronnie-bot&utm_campaign=Badge_Coverage)
+
 ![alt text](images/awesome-o.jpg)
 
 ## Hopefully the Rudest Slack Bot Around!

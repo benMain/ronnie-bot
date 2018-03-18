@@ -4,3 +4,6 @@ env_vars.py
 *.pyc
 .vscode/*
 *.sqlite3
+**/coverage.xml
+**/.coverage
+*.noseids

@@ -1,0 +1,17 @@
+{
+    "dev": {
+        "app_function": "app.app",
+        "async_resources": false,
+        "aws_region": "us-west-2",
+        "profile_name": "default",
+        "certificate_arn": "arn:aws:acm:us-east-1:446226631021:certificate/fabb6d64-b598-4357-80a0-751cedcd0391",
+        "domain": "ronnie-bot.dev.failsave.io",
+        "remote_env": "s3://ronnie-bot-config/environment.json",
+        "log_level": "WARNING",
+        "memory_size": 3072,
+        "project_name": "ronnie-bot",
+        "runtime": "python2.7",
+        "s3_bucket": "ronnie-bot-lambda-code",
+        "timeout_seconds": 300
+    }
+}
