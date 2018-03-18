@@ -1,9 +1,13 @@
 # Ronnie Bot
-## Slack Bot Using [Slack's Events API](https://api.slack.com/events-api) in Python
-This bot is an example implementation of building a Slack App with Slack's Python SDK, [python-slackclient](http://python-slackclient.readthedocs.io/en/latest/).
+![alt text](images/awesome-o.jpg)
 
+## Hopefully the Rudest Slack Bot Around!
+Ronnie Bot began as a joke, but no longer.
 
-#### Technical Requirements
+His purpose is to annoy the shit out of my team mates 
+and hopefully get a couple of laughs.
+
+### Technical Requirements
 
 - **[Python](https://www.python.org/downloads/)**, the programming language we're
 going to use.
@@ -36,10 +40,8 @@ this command:
 pip install -r requirements.txt
 ```
 
-###### Server Requirements
+### Server Requirements
 
-Slack will be delivering events to your app's server so your server needs to be able to receive incoming HTTPS traffic from Slack.
+Planning to run via Lambda and API Gateway via Zappa. This should Negate Server Requirement.  
 
-If you are running this project locally, you'll need to set up tunnels for Slack to connect to your endpoints. [Ngrok](https://ngrok.com/) is an easy to use tunneling tool that supports HTTPS, which is required by Slack.
-
-You'll likely want to test events coming to your server without going through the actions on your Slack team.  [Postman](https://www.getpostman.com/) is a useful tool you can use to recreate requests sent from Slack to your server. This is especially helpful for events like user join, where the workflow to recreate the event requires quite a bit of set up.
+Only problem is training-models of machine learning chatbot.
