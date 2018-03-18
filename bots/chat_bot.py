@@ -27,13 +27,8 @@ class ChatBot(object):
         self.verification = os.environ.get("VERIFICATION_TOKEN")
         self.client = SlackClient(self.oauth["bot_token"])
         self.last_insult = datetime.fromtimestamp(1521339343)
-        self.chatter_bot = CBot(
-            'ronnie-bot',
-            trainer='chatterbot.trainers.ChatterBotCorpusTrainer',
-            storage_adapter='chatterbot.storage.SQLStorageAdapter',
-            database='./database.sqlite3'
-        )
-        self.chatter_bot.train("chatterbot.corpus.english")
+        self.chatter_bot = None
+        self.processed_events = []
 
     def auth(self, code):
         """
@@ -53,7 +48,7 @@ class ChatBot(object):
                                  auth_response["bot"]["bot_access_token"]}
         self.client = SlackClient(authed_teams[team_id]["bot_token"])
 
-    def insult_teammates(self, slack_event, team_id):
+    def insult_teammates(self, slack_event):
         """
         Occassionally Ronnie-bot likes to insult his team mates.
         He's a freaking jerk.
@@ -62,7 +57,8 @@ class ChatBot(object):
             float(slack_event["event_ts"]))
 
         datetime_delta = event_datetime - self.last_insult
-        if datetime_delta.total_seconds() > 600:
+        if (datetime_delta.total_seconds() > 600 and not
+                self.event_previously_processed(slack_event["event_ts"])):
             insult = self.build_insult(slack_event["user"])
             self.client.api_call(
                 "chat.postMessage",
@@ -73,12 +69,23 @@ class ChatBot(object):
 
     def chatter(self, slack_event):
         """Ronnie Bot defers to Chatter-Bot for talking."""
-        chatter_response = self.chatter_bot.get_response(slack_event["text"])
-        self.client.api_call(
-            "chat.postMessage",
-            channel=slack_event["channel"],
-            text=chatter_response
+        if not self.event_previously_processed(slack_event["event_ts"]):
+            self.setup_chatter_bot()
+            chatter_response = self.chatter_bot.get_response(
+                slack_event["text"])
+            self.client.api_call(
+                "chat.postMessage",
+                channel=slack_event["channel"],
+                text=chatter_response
+            )
+
+    def fetch_channel_attributes(self, channel_id):
+        """Fetch channel name by channel_id."""
+        channel_response = self.client.api_call(
+            "channels.info",
+            channel=channel_id
         )
+        return channel_response["channel"]
 
     def build_insult(self, user_id):
         """mattbas.org is an awesome insult generator!"""
@@ -91,3 +98,22 @@ class ChatBot(object):
         insult_api_conn.request("GET", "/api/insult.json?who=%s" % user_name)
         insult_api_response = json.loads(insult_api_conn.getresponse().read())
         return insult_api_response["insult"]
+
+    def event_previously_processed(self, event_id):
+        """If this event was previously processed, exit."""
+        if event_id in self.processed_events:
+            return True
+        else:
+            self.processed_events.append(event_id)
+            return False
+
+    def setup_chatter_bot(self):
+        """Only Instantiate chatter_bot if necessary."""
+        if self.chatter_bot is None:
+            self.chatter_bot = CBot(
+                'ronnie-bot',
+                trainer='chatterbot.trainers.ChatterBotCorpusTrainer',
+                storage_adapter='chatterbot.storage.SQLStorageAdapter',
+                database='./database.sqlite3'
+            )
+            self.chatter_bot.train("chatterbot.corpus.english")

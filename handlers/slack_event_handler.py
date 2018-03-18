@@ -30,15 +30,17 @@ def _event_handler(event_type, slack_event):
     Ronnie Bot is made up of multiple sub-bots and routing events to
     the appropriate bot takes planning
     """
-    team_id = slack_event["team_id"]
 
     # ============== Respond to Messages ============= #
     # Read Messages and Respond if necessary.
 
     if event_type == "message":
         if not is_from_bot(slack_event):
-            chat_bot.insult_teammates(slack_event["event"], team_id)
-        return make_response("ChatBot mocks his team mates occasionally...",
+            if is_public_channel(slack_event["event"]["channel"]):
+                chat_bot.insult_teammates(slack_event["event"])
+            else:
+                chat_bot.chatter(slack_event["event"])
+        return make_response("ChatBot talks/insults his teammates...",
                              200,)
 
     # ============= Reaction Added Events ============= #
@@ -61,6 +63,13 @@ def _event_handler(event_type, slack_event):
 def is_from_bot(slack_event):
     if("username" in slack_event["event"].keys()
             and "ronnie-bot" in slack_event["event"]["username"]):
+        return True
+    else:
+        return False
+
+
+def is_public_channel(channel_id):
+    if "C" in channel_id[:1]:
         return True
     else:
         return False
