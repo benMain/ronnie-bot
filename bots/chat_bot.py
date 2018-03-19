@@ -24,7 +24,7 @@ class ChatBot(object):
                       "client_secret": os.environ.get("CLIENT_SECRET"),
                       "bot_token": os.environ.get("BOT_TOKEN"),
                       "app_token": os.environ.get("APP_TOKEN"),
-                      "scope": "bot"}
+                      "scope": "bot, chat:write:bot, reactions:write, users:read"}
         self.verification = os.environ.get("VERIFICATION_TOKEN")
         self.bot_client = SlackClient(self.oauth["bot_token"])
         self.app_client = SlackClient(self.oauth["app_token"])
@@ -46,6 +46,7 @@ class ChatBot(object):
             client_secret=self.oauth["client_secret"],
             code=code
         )
+        print(auth_response)
         team_id = auth_response["team_id"]
         authed_teams[team_id] = {"bot_token":
                                  auth_response["bot"]["bot_access_token"]}
@@ -98,7 +99,8 @@ class ChatBot(object):
             "users.info",
             user=user_id
         )
-        user_name = response_user["user"]["profile"]["display_name"]
+        print(response_user)
+        user_name = response_user["user"]["name"]
         insult_api_conn = HTTPSConnection("insult.mattbas.org")
         insult_api_conn.request("GET", "/api/insult.json?who=%s" % user_name)
         insult_api_response = json.loads(insult_api_conn.getresponse().read())
