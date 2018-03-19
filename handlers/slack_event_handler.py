@@ -46,6 +46,7 @@ def _event_handler(event_type, slack_event):
     # ============= Reaction Added Events ============= #
     # If people like things ChatBot does not like them.
     elif event_type == "reaction_added":
+        chat_bot.react_negatively(slack_event["event"])
         return make_response("Chatbot votes against people", 200,)
 
     # =============== Pin Added Events ================ #

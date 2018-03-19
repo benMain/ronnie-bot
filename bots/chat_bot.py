@@ -23,9 +23,11 @@ class ChatBot(object):
         self.oauth = {"client_id": os.environ.get("CLIENT_ID"),
                       "client_secret": os.environ.get("CLIENT_SECRET"),
                       "bot_token": os.environ.get("BOT_TOKEN"),
+                      "app_token": os.environ.get("APP_TOKEN"),
                       "scope": "bot"}
         self.verification = os.environ.get("VERIFICATION_TOKEN")
-        self.client = SlackClient(self.oauth["bot_token"])
+        self.bot_client = SlackClient(self.oauth["bot_token"])
+        self.app_client = SlackClient(self.oauth["app_token"])
         self.last_insult = datetime.fromtimestamp(1521339343)
         self.chatter_bot = None
         self.processed_events = []
@@ -37,7 +39,8 @@ class ChatBot(object):
         object. Code is a temporary authorization code sent by Slack to be
         exchanged for an OAuth token
         """
-        auth_response = self.client.api_call(
+        self.bot_client = SlackClient("")
+        auth_response = self.bot_client.api_call(
             "oauth.access",
             client_id=self.oauth["client_id"],
             client_secret=self.oauth["client_secret"],
@@ -46,7 +49,7 @@ class ChatBot(object):
         team_id = auth_response["team_id"]
         authed_teams[team_id] = {"bot_token":
                                  auth_response["bot"]["bot_access_token"]}
-        self.client = SlackClient(authed_teams[team_id]["bot_token"])
+        self.bot_client = SlackClient(authed_teams[team_id]["bot_token"])
 
     def insult_teammates(self, slack_event):
         """
@@ -57,10 +60,10 @@ class ChatBot(object):
             float(slack_event["event_ts"]))
 
         datetime_delta = event_datetime - self.last_insult
-        if (datetime_delta.total_seconds() > 600 and not
+        if (datetime_delta.total_seconds() > 43200 and not
                 self.event_previously_processed(slack_event["event_ts"])):
             insult = self.build_insult(slack_event["user"])
-            self.client.api_call(
+            self.app_client.api_call(
                 "chat.postMessage",
                 channel=slack_event["channel"],
                 text=insult
@@ -73,23 +76,25 @@ class ChatBot(object):
             self.setup_chatter_bot()
             chatter_response = self.chatter_bot.get_response(
                 slack_event["text"])
-            self.client.api_call(
+            self.app_client.api_call(
                 "chat.postMessage",
                 channel=slack_event["channel"],
                 text=chatter_response
             )
 
-    def fetch_channel_attributes(self, channel_id):
-        """Fetch channel name by channel_id."""
-        channel_response = self.client.api_call(
-            "channels.info",
-            channel=channel_id
-        )
-        return channel_response["channel"]
+    def react_negatively(self, slack_event):
+        """Ronnie Bot likes to down vote things other people support."""
+        if not self.event_previously_processed(slack_event["event_ts"]):
+            response = self.app_client.api_call(
+                "reactions.add",
+                channel=slack_event["item"]["channel"],
+                name="poop",
+                timestamp=slack_event["item"]["ts"]
+            )
 
     def build_insult(self, user_id):
         """mattbas.org is an awesome insult generator!"""
-        response_user = self.client.api_call(
+        response_user = self.app_client.api_call(
             "users.info",
             user=user_id
         )
@@ -113,7 +118,23 @@ class ChatBot(object):
             self.chatter_bot = CBot(
                 'ronnie-bot',
                 trainer='chatterbot.trainers.ChatterBotCorpusTrainer',
+                preprocessors=['chatterbot.preprocessors.clean_whitespace'],
+                logic_adapters=[
+                    {
+                        "import_path": "chatterbot.logic.BestMatch",
+                        "statement_comparison_function":
+                            "chatterbot.comparisons.levenshtein_distance",
+                        "response_selection_method":
+                            "chatterbot.response_selection.get_first_response"
+                    },
+                    {
+                        'import_path': 'chatterbot.logic.LowConfidenceAdapter',
+                        'threshold': 0.5,
+                        'default_response':
+                            'Sorry, but my AI sucks, and I do not understand.'
+                    }
+                ],
                 storage_adapter='chatterbot.storage.SQLStorageAdapter',
-                database='./database.sqlite3'
+                database='/tmp/database.sqlite3'
             )
             self.chatter_bot.train("chatterbot.corpus.english")

@@ -7,3 +7,4 @@ env_vars.py
 **/coverage.xml
 **/.coverage
 *.noseids
+*.zip
