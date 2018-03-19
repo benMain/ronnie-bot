@@ -85,7 +85,7 @@ class ChatBot(object):
     def react_negatively(self, slack_event):
         """Ronnie Bot likes to down vote things other people support."""
         if not self.event_previously_processed(slack_event["event_ts"]):
-            response = self.app_client.api_call(
+            self.app_client.api_call(
                 "reactions.add",
                 channel=slack_event["item"]["channel"],
                 name="poop",
