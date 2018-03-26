@@ -7,6 +7,7 @@ from datetime import datetime
 from slackclient import SlackClient
 from httplib import HTTPSConnection
 from chatterbot import ChatBot as CBot
+from clients import Nasa
 # To remember which teams have authorized your app and what tokens are
 # associated with each team, we can store this information in memory on
 # as a global object. When your bot is out of development, it's best to
@@ -28,9 +29,10 @@ class ChatBot(object):
         self.verification = os.environ.get("VERIFICATION_TOKEN")
         self.bot_client = SlackClient(self.oauth["bot_token"])
         self.app_client = SlackClient(self.oauth["app_token"])
-        self.last_insult = datetime.fromtimestamp(1521339343)
+        self.last_public_comment = datetime.fromtimestamp(1521339343)
         self.chatter_bot = None
         self.processed_events = []
+        self.NasaClient = Nasa.NasaClient()
 
     def auth(self, code):
         """
@@ -57,11 +59,8 @@ class ChatBot(object):
         Occassionally Ronnie-bot likes to insult his team mates.
         He's a freaking jerk.
         """
-        event_datetime = datetime.fromtimestamp(
-            float(slack_event["event_ts"]))
 
-        datetime_delta = event_datetime - self.last_insult
-        if (datetime_delta.total_seconds() > 43200 and not
+        if (self.can_comment(slack_event) and not
                 self.event_previously_processed(slack_event["event_ts"])):
             insult = self.build_insult(slack_event["user"])
             self.app_client.api_call(
@@ -69,7 +68,6 @@ class ChatBot(object):
                 channel=slack_event["channel"],
                 text=insult
             )
-            self.last_insult = event_datetime
 
     def chatter(self, slack_event):
         """Ronnie Bot defers to Chatter-Bot for talking."""
@@ -93,6 +91,18 @@ class ChatBot(object):
                 timestamp=slack_event["item"]["ts"]
             )
 
+    def make_astronomy_post(self, slack_event):
+        """Post Astrononmy Picture of the day!"""
+        if (not self.event_previously_processed(slack_event["event_ts"])
+                and self.can_comment(slack_event)):
+            response = self.NasaClient.get_astronomy_photo()
+            self.app_client.api_call(
+                "chat.postMessage",
+                channel=slack_event["channel"],
+                text=response["explanation"],
+                icon_url=response["url"]
+            )
+
     def build_insult(self, user_id):
         """mattbas.org is an awesome insult generator!"""
         response_user = self.app_client.api_call(
@@ -105,6 +115,17 @@ class ChatBot(object):
         insult_api_conn.request("GET", "/api/insult.json?who=%s" % user_name)
         insult_api_response = json.loads(insult_api_conn.getresponse().read())
         return insult_api_response["insult"]
+
+    def can_comment(self, slack_event):
+        event_datetime = datetime.fromtimestamp(
+            float(slack_event["event_ts"]))
+
+        datetime_delta = event_datetime - self.last_public_comment
+        if datetime_delta.total_seconds() > 43200:
+            self.last_public_comment = event_datetime
+            return True
+        else:
+            return False
 
     def event_previously_processed(self, event_id):
         """If this event was previously processed, exit."""
