@@ -96,11 +96,19 @@ class ChatBot(object):
         if (not self.event_previously_processed(slack_event["event_ts"])
                 and self.can_comment(slack_event)):
             response = self.NasaClient.get_astronomy_photo()
+            attachments = []
+            attachment = {
+                "color": "#FFD700",
+                "pretext": "Ronnie-Bot explores the universe",
+                "title": response["title"],
+                "text": response["explanation"],
+                "image_url": response["url"]
+            }
+            attachments.append(attachment)
             self.app_client.api_call(
                 "chat.postMessage",
                 channel=slack_event["channel"],
-                text=response["explanation"],
-                icon_url=response["url"]
+                attachments=attachments
             )
 
     def build_insult(self, user_id):
