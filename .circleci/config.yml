@@ -44,7 +44,7 @@ jobs:
           name: Unit Test
           command: |
             . venv/bin/activate
-            nosetests . --with-coverage --cover-xml --cover-erase --cover-package=bots,handlers,templates --cover-xml-file=coverage.xml
+            nosetests . --with-coverage --cover-xml --cover-erase --cover-package=bots,handlers,templates,clients --cover-xml-file=coverage.xml
             .circleci/coverage-update.sh
 
       - store_artifacts:
