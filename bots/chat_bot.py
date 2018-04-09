@@ -7,7 +7,7 @@ from datetime import datetime
 from slackclient import SlackClient
 from httplib import HTTPSConnection
 from chatterbot import ChatBot as CBot
-from clients import Nasa
+from clients import Nasa, NewsClient
 # To remember which teams have authorized your app and what tokens are
 # associated with each team, we can store this information in memory on
 # as a global object. When your bot is out of development, it's best to
@@ -33,6 +33,7 @@ class ChatBot(object):
         self.chatter_bot = None
         self.processed_events = []
         self.NasaClient = Nasa.NasaClient()
+        self.NewsClient = NewsClient.NewsClient()
 
     def auth(self, code):
         """
@@ -105,6 +106,24 @@ class ChatBot(object):
                 "image_url": response["url"]
             }
             attachments.append(attachment)
+            self.app_client.api_call(
+                "chat.postMessage",
+                channel=slack_event["channel"],
+                attachments=attachments
+            )
+
+    def techcrunch_post(self, slack_event):
+        """The techcrunch news."""
+        if (not self.event_previously_processed(slack_event["event_ts"])
+                and self.can_comment(slack_event)):
+            news_response = self.NewsClient.get_headlines("techcrunch")
+            attachments = [{
+                "color": "#00FF00",
+                "pretext": "Ronnie-Bot lives for Technology",
+                "title": news_response["title"],
+                "text": news_response["description"],
+                "image_url": news_response["urlToImage"]
+            }]
             self.app_client.api_call(
                 "chat.postMessage",
                 channel=slack_event["channel"],

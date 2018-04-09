@@ -38,10 +38,11 @@ def _event_handler(event_type, slack_event):
         if not is_from_bot(slack_event):
             if is_public_channel(slack_event["event"]["channel"]):
                 #  chat_bot.insult_teammates(slack_event["event"])
-                chat_bot.make_astronomy_post(slack_event["event"])
+                #  chat_bot.make_astronomy_post(slack_event["event"])
+                chat_bot.techcrunch_post(slack_event["event"])
             else:
                 chat_bot.chatter(slack_event["event"])
-        return make_response("ChatBot talks/insults his teammates...",
+        return make_response("ChatBot posts the news...",
                              200,)
 
     # ============= Reaction Added Events ============= #
