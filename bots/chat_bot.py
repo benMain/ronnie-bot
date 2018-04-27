@@ -7,7 +7,7 @@ from datetime import datetime
 from slackclient import SlackClient
 from httplib import HTTPSConnection
 from chatterbot import ChatBot as CBot
-from clients import Nasa, NewsClient
+from clients import Nasa, NewsClient, xkcd, s3
 # To remember which teams have authorized your app and what tokens are
 # associated with each team, we can store this information in memory on
 # as a global object. When your bot is out of development, it's best to
@@ -29,11 +29,13 @@ class ChatBot(object):
         self.verification = os.environ.get("VERIFICATION_TOKEN")
         self.bot_client = SlackClient(self.oauth["bot_token"])
         self.app_client = SlackClient(self.oauth["app_token"])
-        self.last_public_comment = datetime.fromtimestamp(1521339343)
         self.chatter_bot = None
         self.processed_events = []
+        self.S3Client = s3.S3Client()
         self.NasaClient = Nasa.NasaClient()
         self.NewsClient = NewsClient.NewsClient()
+        self.XkcdClient = xkcd.XKCDClient()
+        self.last_public_comment = self.S3Client.get_last_post()
 
     def auth(self, code):
         """
@@ -90,6 +92,24 @@ class ChatBot(object):
                 channel=slack_event["item"]["channel"],
                 name="poop",
                 timestamp=slack_event["item"]["ts"]
+            )
+
+    def xkcd_comic(self, slack_event):
+        """Write XKCD comic to channel."""
+        if (not self.event_previously_processed(slack_event["event_ts"])
+                and self.can_comment(slack_event)):
+            response = self.XkcdClient.get_comic()
+            attachments = [{
+                "color": "#993399",
+                "pretext": "Ronnie-Bot is funnier than you",
+                "title": response["title"],
+                "text": response["transcript"],
+                "image_url": response["img"]
+            }]
+            self.app_client.api_call(
+                "chat.postMessage",
+                channel=slack_event["channel"],
+                attachments=attachments
             )
 
     def make_astronomy_post(self, slack_event):
@@ -150,6 +170,7 @@ class ChatBot(object):
         datetime_delta = event_datetime - self.last_public_comment
         if datetime_delta.total_seconds() > 43200:
             self.last_public_comment = event_datetime
+            self.S3Client.write_last_post(event_datetime)
             return True
         else:
             return False
